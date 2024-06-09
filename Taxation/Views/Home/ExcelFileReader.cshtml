@@ -1,51 +1,71 @@
-﻿
-<form method="post" enctype="multipart/form-data">
-<div class="row">
-    <label> Select File</label>
-    <input type="file" name="file">
-</div>    
-<div class="row" style="padding-top:16px;">
-    <div class="col-3">
-        <input type="submit" asp-controller="Home" asp-action="ExcelFileReader" class="btn btn-outline-primary" value="Read Excel File">
-    </div>
+﻿<script src="~/lib/jquery/dist/jquery.min.js"></script>
 
-</div>
+
+<form method="post" enctype="multipart/form-data">
+    <div class="row">
+        <label> Select File</label>
+        <input type="file" name="file">
+    </div>
+    <div class="row" style="padding-top:16px;">
+        <div class="col-3">
+            <input type="submit" asp-controller="Home" asp-action="ExcelFileReader" class="btn btn-outline-primary" value="Read Excel File">
+        </div>
+    </div>
 </form>
 <p style="padding-bottom:10px;">
-    Number Of Rows  : @ViewBag.NumberOfRows
+    Number Of Rows: @ViewBag.NumberOfRows
 </p>
-<table class="table table-striped">
-    <thead>
-        <tr> 
-            @if(ViewBag.ExcelData is not null && ViewBag.ExcelData.Count >0)
-            {
-                @foreach (var header in ViewBag.ExcelData[0])
+<div id="taxes">
+    <table class="table table-striped" id="tableToExcel">
+        <thead>
+            <tr>
+                @if (ViewBag.ExcelData is not null && ViewBag.ExcelData.Count > 0)
                 {
-                    <th>@header</th>
-                }
-
-
-            }
-
-        </tr>
-
-
-    </thead>
-    <tbody>
-        @if (ViewBag.ExcelData is not null && ViewBag.ExcelData.Count > 1)
-        {
-            @for(int i =1; i<ViewBag.ExcelData.Count; i++)
-            {
-                <tr>
-                    @foreach(var cell in ViewBag.ExcelData[i] )
+                    @foreach (var header in ViewBag.ExcelData[0])
                     {
-                        <td>@cell</td>
-                        
-                        
+                        <th>@header</th>
+                    }
+                }
+            </tr>
+        </thead>
+        <tbody>
+            @if (ViewBag.ExcelData is not null && ViewBag.ExcelData.Count > 1)
+            {
+                @for (int i = 1; i < ViewBag.ExcelData.Count; i++)
+                {
+                    <tr>
+                        @foreach (var cell in ViewBag.ExcelData[i])
+                        {
+                            <td>@cell</td>
+                        }
+                    </tr>
+                }
+                <tr>
+                    @if (ViewBag.SumTotalBeforeTaxes != 0)
+                    {
+                        <td>Total value =</td>
+                        <td>@ViewBag.SumTotalBeforeTaxes</td>
                     }
                 </tr>
             }
-        }
-    </tbody>
+        </tbody>
+    </table>
+</div>
 
-</table>
+<form asp-action="ExportToExcel" asp-controller="Home" method="post">
+    @if (ViewBag.ExcelData is not null && ViewBag.ExcelData.Count > 0)
+    {
+        <input type="hidden" name="htmlTable" id="htmlTable">
+        <input type="submit" id="btnSubmit" class="btn btn-success" value="Export Excel File" />
+    }
+</form>
+
+<script>
+    $(function () {
+        $("#btnSubmit").click(function (event) {
+            event.preventDefault();
+            $("#htmlTable").val($("#taxes").html());
+            $(this).closest('form').submit();
+        });
+    });
+</script>
