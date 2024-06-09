@@ -1,6 +1,7 @@
 using ExcelDataReader;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
+using System.Text;
 using Taxation.Models;
 
 namespace Taxation.Controllers
@@ -51,9 +52,9 @@ namespace Taxation.Controllers
 				{
 					await file.CopyToAsync(stream);
 				}
-
                 // ReadFile 
                 var excelData = new List<List<object>>();
+                double sumTotalBeforeTaxes = 0;
                 using (var stream = System.IO.File.Open(filePath, FileMode.Open, FileAccess.Read))
                 {
 					
@@ -63,6 +64,8 @@ namespace Taxation.Controllers
 
 
 						var numberOfRows = reader.RowCount;
+						var Fcount = reader.FieldCount;
+						ViewBag.Fcount = Fcount;
 						ViewBag.NumberOfRows = numberOfRows;
                         do
                         {
@@ -94,14 +97,23 @@ namespace Taxation.Controllers
                                 }
 								else
 								{
+									
 									totalBeforTaxes = totalAfetrtaxing - taxes;
-									rowData.Add( totalBeforTaxes);
+                                    sumTotalBeforeTaxes += totalBeforTaxes;
+                                    rowData.Add( totalBeforTaxes);
 									
 								}
                                 excelData.Add(rowData);
                             }
                         } while (reader.NextResult());
-						ViewBag.excelData = excelData;
+                        var sumRow = new List<object>();
+                        for (int i = 0; i < reader.FieldCount; i++)
+                        {
+                            sumRow.Add(i == reader.FieldCount - 1 ? "Total Sum" : "");
+                        }
+						
+                        ViewBag.excelData = excelData;
+                        ViewBag.SumTotalBeforeTaxes = sumTotalBeforeTaxes;
 
                     }
                 }
@@ -111,5 +123,24 @@ namespace Taxation.Controllers
             }
 			return View();
 		}
-	}
+
+        public FileResult ExportToExcel(string htmlTable)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(htmlTable))
+                {
+                    throw new ArgumentException("The HTML table content is empty or null.");
+                }
+
+                byte[] fileContent = Encoding.ASCII.GetBytes(htmlTable);
+
+                return File(fileContent, "application/vnd.ms-excel", "Taxes_Sheet.xls");
+            }
+            catch (Exception ex)
+            {
+                return File(Encoding.ASCII.GetBytes("An error occurred while generating the Excel file."), "application/vnd.ms-excel", "Error.xls");
+            }
+        }
+    }
 }
